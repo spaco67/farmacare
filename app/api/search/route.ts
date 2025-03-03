@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/response';
+import { NextResponse } from "next/server";
+import { analyzeImage } from "@/lib/openai";
 
 // In-memory storage for analysis results
 let analysisHistory: any[] = [];
@@ -32,19 +33,23 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const analysis = await req.json();
-    analysisHistory.push({
-      ...analysis,
-      createdAt: new Date().toISOString(),
-      id: Date.now().toString(),
-    });
-    return NextResponse.json({ success: true });
+    const { image } = await request.json();
+    
+    if (!image) {
+      return NextResponse.json(
+        { error: "No image provided" },
+        { status: 400 }
+      );
+    }
+
+    const analysis = await analyzeImage(image);
+    return NextResponse.json(analysis);
   } catch (error) {
-    console.error('Error saving analysis:', error);
+    console.error("Search error:", error);
     return NextResponse.json(
-      { error: 'Failed to save analysis' },
+      { error: "Failed to analyze image" },
       { status: 500 }
     );
   }
